@@ -1,0 +1,76 @@
+# Local data stores only. The API runs on the host (npm run dev) and reaches
+# both services through the published ports.
+
+name: auco
+
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: auco-mongodb
+    restart: unless-stopped
+    ports:
+      - "${MONGODB_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER:-auco}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-auco_dev}
+      MONGO_INITDB_DATABASE: ${MONGODB_DB:-auco}
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--username",
+          "${MONGODB_USER:-auco}",
+          "--password",
+          "${MONGODB_PASSWORD:-auco_dev}",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.adminCommand('ping').ok",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - auco
+
+  dynamodb-local:
+    image: amazon/dynamodb-local:3.3.2
+    container_name: auco-dynamodb
+    restart: unless-stopped
+    # The image ENTRYPOINT is already `java`. -sharedDb keeps every client on
+    # one database file; -dbPath persists it across restarts.
+    # The image user cannot write a new named volume, so local dev runs as root.
+    user: root
+    working_dir: /home/dynamodblocal
+    command:
+      - -jar
+      - DynamoDBLocal.jar
+      - -sharedDb
+      - -dbPath
+      - /home/dynamodblocal/data
+    ports:
+      - "${DYNAMODB_PORT:-8000}:8000"
+    volumes:
+      - dynamodb_data:/home/dynamodblocal/data
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8000'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - auco
+
+volumes:
+  mongodb_data:
+  dynamodb_data:
+
+networks:
+  auco:
+    name: auco
+    driver: bridge
