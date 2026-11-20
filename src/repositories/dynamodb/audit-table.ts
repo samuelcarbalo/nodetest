@@ -12,20 +12,20 @@ import { randomUUID } from "node:crypto";
 /**
  * Auditoría por documento, ordenada en el tiempo.
  *
- *   pk = DOCUMENT#<numero>
- *   sk = DATE#<fecha>
+ *   PK = DOCUMENT#<numero>
+ *   SK = DATE#<fecha>
  *
  * <fecha> es ISO-8601 UTC (`toISOString`). El prefijo DATE# es fijo, así
  * que el orden lexicográfico sigue siendo el cronológico: un Query por
- * `pk` con `ScanIndexForward` devuelve la línea de tiempo del documento.
+ * `PK` con `ScanIndexForward` devuelve la línea de tiempo del documento.
  *
  * Ejemplo:
- *   pk = DOCUMENT#1042
- *   sk = DATE#2026-11-18T19:05:00.123Z
+ *   PK = DOCUMENT#1042
+ *   SK = DATE#2026-11-18T19:05:00.123Z
  */
 
-export const AUDIT_PARTITION_KEY = "pk";
-export const AUDIT_SORT_KEY = "sk";
+export const AUDIT_PARTITION_KEY = "PK";
+export const AUDIT_SORT_KEY = "SK";
 export const AUDIT_DATE_PREFIX = "DATE#";
 
 const DOCUMENT_PREFIX = "DOCUMENT#";
@@ -40,8 +40,8 @@ export type AuditEventKeyInput = {
 };
 
 export type AuditEventKey = {
-  pk: string;
-  sk: string;
+  PK: string;
+  SK: string;
   documentNumber: string;
   eventType: string;
   occurredAt: string;
@@ -54,7 +54,7 @@ export type EnsureAuditTableResult = "created" | "exists";
  * Condición de escritura para el repositorio: si la clave ya existe,
  * la inserción falla en lugar de pisar un evento de auditoría.
  */
-export const AUDIT_PUT_CONDITION = "attribute_not_exists(pk) AND attribute_not_exists(sk)";
+export const AUDIT_PUT_CONDITION = "attribute_not_exists(PK) AND attribute_not_exists(SK)";
 
 export function buildAuditEventKey(input: AuditEventKeyInput): AuditEventKey {
   const documentNumber = normalizeDocumentNumber(input.documentNumber);
@@ -63,8 +63,8 @@ export function buildAuditEventKey(input: AuditEventKeyInput): AuditEventKey {
   const eventId = normalizeEventId(input.eventId ?? randomUUID());
 
   return {
-    pk: `${DOCUMENT_PREFIX}${documentNumber}`,
-    sk: `${AUDIT_DATE_PREFIX}${occurredAt}`,
+    PK: `${DOCUMENT_PREFIX}${documentNumber}`,
+    SK: `${AUDIT_DATE_PREFIX}${occurredAt}`,
     documentNumber,
     eventType,
     occurredAt,
@@ -81,26 +81,26 @@ export function auditTimelineQuery(
   documentNumber: string,
   range?: { from?: Date; to?: Date },
 ): QueryCommandInput {
-  const pk = `${DOCUMENT_PREFIX}${normalizeDocumentNumber(documentNumber)}`;
-  const names: Record<string, string> = { "#pk": AUDIT_PARTITION_KEY };
-  const values: Record<string, string> = { ":pk": pk };
+  const partitionValue = `${DOCUMENT_PREFIX}${normalizeDocumentNumber(documentNumber)}`;
+  const names: Record<string, string> = { "#PK": AUDIT_PARTITION_KEY };
+  const values: Record<string, string> = { ":PK": partitionValue };
 
-  let keyCondition = "#pk = :pk";
+  let keyCondition = "#PK = :PK";
   const boundsTheTimeline = range?.from !== undefined || range?.to !== undefined;
 
   if (boundsTheTimeline) {
-    names["#sk"] = AUDIT_SORT_KEY;
+    names["#SK"] = AUDIT_SORT_KEY;
   }
 
   if (range?.from && range.to) {
-    keyCondition += " AND #sk BETWEEN :from AND :to";
+    keyCondition += " AND #SK BETWEEN :from AND :to";
     values[":from"] = auditSortKey(range.from);
     values[":to"] = auditSortKey(range.to);
   } else if (range?.from) {
-    keyCondition += " AND #sk >= :from";
+    keyCondition += " AND #SK >= :from";
     values[":from"] = auditSortKey(range.from);
   } else if (range?.to) {
-    keyCondition += " AND #sk <= :to";
+    keyCondition += " AND #SK <= :to";
     values[":to"] = auditSortKey(range.to);
   }
 

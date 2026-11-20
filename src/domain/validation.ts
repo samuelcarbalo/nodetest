@@ -33,11 +33,12 @@ export const createValidationSchema = z
       .trim()
       .regex(DOCUMENT_NUMBER, "documentNumber debe tener de 5 a 20 letras o dígitos"),
     country: z
-      .string({ required_error: "country es obligatorio", invalid_type_error: "country debe ser texto" })
+      .string({ invalid_type_error: "country debe ser texto" })
       .trim()
       .min(2, "country debe tener al menos 2 caracteres")
       .max(60, "country admite como máximo 60 caracteres")
-      .regex(COUNTRY_NAME, "country debe ser un nombre de país"),
+      .regex(COUNTRY_NAME, "country debe ser un nombre de país")
+      .default("Colombia"),
   })
   .strict();
 

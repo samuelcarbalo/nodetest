@@ -66,7 +66,7 @@ npm install
 npm run dev
 ```
 
-`npm run dev` arranca la API con recarga y crea la tabla `audit_events` si no existe. La clave de auditoría es `pk = DOCUMENT#<numero>` y `sk = DATE#<fecha>`.
+`npm run dev` arranca la API con recarga y crea la tabla `audit_events` si no existe. La clave de auditoría es `PK = DOCUMENT#<numero>` y `SK = DATE#<fecha>`.
 
 Para producción local, sin recarga:
 
@@ -99,7 +99,16 @@ Eso corre Vitest con Supertest (`npm run test:http`) y después las pruebas de N
 
 - `name`: 2 a 120 caracteres. Letras, espacios, apóstrofos o guiones.
 - `documentNumber`: 5 a 20 letras o dígitos.
-- `country`: nombre del país, o su código ISO de dos letras.
+- `country`: opcional. Nombre del país, o su código ISO de dos letras. Si no viene, se usa `Colombia`.
+
+Un cuerpo con solo `name` y `documentNumber` es válido:
+
+```json
+{
+  "name": "Ana Pérez",
+  "documentNumber": "1234567890"
+}
+```
 
 Respuestas habituales:
 

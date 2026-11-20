@@ -39,9 +39,9 @@ describe("DynamoAuditLog", () => {
     assert.equal(calls.length, 1);
     const input = calls[0]?.args[0].input;
     assert.equal(input?.TableName, "audit_events");
-    assert.equal(input?.Item?.pk, "DOCUMENT#1234567890");
-    assert.equal(input?.Item?.sk, "DATE#2026-11-19T20:00:00.000Z");
-    assert.equal(input?.ConditionExpression, "attribute_not_exists(pk) AND attribute_not_exists(sk)");
+    assert.equal(input?.Item?.PK, "DOCUMENT#1234567890");
+    assert.equal(input?.Item?.SK, "DATE#2026-11-19T20:00:00.000Z");
+    assert.equal(input?.ConditionExpression, "attribute_not_exists(PK) AND attribute_not_exists(SK)");
   });
 
   it("propagates ConditionalCheckFailedException from the mocked send", async () => {

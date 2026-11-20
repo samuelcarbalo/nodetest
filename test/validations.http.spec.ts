@@ -78,10 +78,26 @@ describe("POST /validations y GET /validations/:id", () => {
     const puts = ddbMock.commandCalls(PutCommand);
     expect(puts).toHaveLength(1);
     expect(puts[0]?.args[0].input.Item).toMatchObject({
-      pk: "DOCUMENT#1234567890",
+      PK: "DOCUMENT#1234567890",
       validationId: response.body.id,
     });
-    expect(puts[0]?.args[0].input.Item?.sk).toMatch(/^DATE#/);
+    expect(puts[0]?.args[0].input.Item?.SK).toMatch(/^DATE#/);
+  });
+
+  it("acepta solo name y documentNumber y usa Colombia", async () => {
+    const { app } = harness(async () => jsonResponse([colombia]));
+
+    const response = await request(app).post("/validations").send({
+      name: "Ana Pérez",
+      documentNumber: "1234567890",
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.countryQuery).toBe("Colombia");
+    expect(response.body.enrichment).toMatchObject({
+      status: "complete",
+      country: { commonName: "Colombia", cca2: "CO" },
+    });
   });
 
   it("responde 400 cuando faltan campos o son inválidos", async () => {

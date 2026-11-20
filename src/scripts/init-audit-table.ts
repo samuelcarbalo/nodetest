@@ -13,7 +13,7 @@ import {
  * Crea `audit_events` en DynamoDB Local si no existe.
  * ResourceInUseException se trata como éxito: la tabla ya está creada
  * o se está creando. Después se espera a ACTIVE y se comprueba que la
- * clave siga siendo pk (HASH) + sk (RANGE).
+ * clave siga siendo PK (HASH) + SK (RANGE).
  */
 async function main(): Promise<void> {
   assertKeyDesign();
@@ -27,9 +27,9 @@ async function main(): Promise<void> {
     await documents.send(
       new QueryCommand({
         TableName: env.DYNAMODB_AUDIT_TABLE,
-        KeyConditionExpression: "#pk = :pk",
-        ExpressionAttributeNames: { "#pk": AUDIT_PARTITION_KEY },
-        ExpressionAttributeValues: { ":pk": "DOCUMENT#__probe__" },
+        KeyConditionExpression: "#PK = :PK",
+        ExpressionAttributeNames: { "#PK": AUDIT_PARTITION_KEY },
+        ExpressionAttributeValues: { ":PK": "DOCUMENT#__probe__" },
         Limit: 1,
         ScanIndexForward: true,
       }),
@@ -63,16 +63,16 @@ function assertKeyDesign(): void {
     eventId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   });
 
-  if (earlier.pk !== "DOCUMENT#1042" || later.pk !== earlier.pk) {
+  if (earlier.PK !== "DOCUMENT#1042" || later.PK !== earlier.PK) {
     throw new Error("Partition key must be DOCUMENT#<numero>");
   }
-  if (earlier.sk !== "DATE#2026-11-18T19:05:00.123Z") {
-    throw new Error(`Unexpected sort key ${earlier.sk}`);
+  if (earlier.SK !== "DATE#2026-11-18T19:05:00.123Z") {
+    throw new Error(`Unexpected sort key ${earlier.SK}`);
   }
-  if (!(earlier.sk < later.sk)) {
+  if (!(earlier.SK < later.SK)) {
     throw new Error("Sort key must order a later DATE# timestamp after an earlier one");
   }
-  if (earlier.sk !== sameInstant.sk) {
+  if (earlier.SK !== sameInstant.SK) {
     throw new Error("Sort key must be DATE#<fecha> for the same timestamp");
   }
 }

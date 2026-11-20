@@ -44,6 +44,14 @@ describe("create validation schema", () => {
     assert.equal(parsed.country, "colombia");
   });
 
+  it("defaults a missing country to Colombia", () => {
+    const parsed = createValidationSchema.parse({
+      name: "Ana Pérez",
+      documentNumber: "1234567890",
+    });
+    assert.equal(parsed.country, "Colombia");
+  });
+
   it("rejects a missing document number and a short name", () => {
     const missing = createValidationSchema.safeParse({ name: "Ana Pérez", country: "colombia" });
     const short = createValidationSchema.safeParse({
